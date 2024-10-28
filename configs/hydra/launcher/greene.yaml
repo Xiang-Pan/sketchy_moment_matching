@@ -4,7 +4,7 @@ defaults:
 gres: gpu:1            # use this on the nyu greene cluster instead of partition
 timeout_min: 60        # 60min
 tasks_per_node: 1
-cpus_per_task: 4    
+cpus_per_task: 4
 nodes: 1
 mem_gb: 32
 max_num_timeout: 0     # increase if you support requeuing / preemption
