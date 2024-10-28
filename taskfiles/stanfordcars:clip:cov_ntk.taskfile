@@ -1,0 +1,702 @@
+version: "3"
+run: when_changed
+
+vars:
+  backbone: '{{.backbone | default "clip"}}'
+  seed: "{{.seed | default 0}}"
+  debug: "{{.debug | default false}}"
+  main: '{{.main | default "data_select.py"}}'
+  overwrite: "{{.overwrite | default false}}"
+  dataset: '{{.dataset | default "cifar10"}}'
+  selection: '{{.selection | default "random"}}'
+  additional: '{{.additional | default ""}}'
+  c: '{{.c | default "0.99" }}'
+  c_conditioned: '{{.c_conditioned | default "False"}}'
+  sketching_dim: "{{.sketching_dim | default 512}}"
+  mix_fraction: "{{.mix_fraction | default 0.4}}"
+  fraction: "{{.fraction | default 1000}}"
+  layers: "{{.layers | default -2}}"
+  k: "{{.k | default 512}}"
+  max_epochs: "{{.max_epochs | default 2000}}"
+  use_target: '{{.use_target | default "random" }}'
+  # ft_fraction: "{{.ft_fraction | default '50,100,200,500,1000'}}"
+  # ----------------- finetuning -----------------
+  # seed: 0,1,2,3,4
+  # backbone: clip
+  # fraction: 500,1000,2000,3000,4000
+  # max_epochs: 2000
+  # simplex_method: sort_pgd
+  # s_init_method: random_m
+  # gamma_init_method: uniform
+  # lr: 1e-2
+  # sparse_scale: 1e-3
+  # c: 0.6,0.7,0.8,0.9
+  # sketching_dim: 64,128,256,512
+
+  # ----------------- debug -----------------
+  # seed: 0
+  # backbone: clip
+  # fraction: 500
+  # max_epochs: 2000
+  # simplex_method: sort_pgd
+  # s_init_method: random_m
+  # gamma_init_method: uniform
+  # lr: 1e-2
+  # sparse_scale: 1e-3
+  # c: 0.9
+  # sketching_dim: 512
+  # cls_pretrain_size: full
+
+
+
+tasks:
+  selection1:
+    vars:
+      layers: -1
+    cmds:
+      - |
+        python {{.main}} -m \
+          dataset=stanfordcars \
+          backbone={{.backbone}} \
+          selection=cov_ntk \
+            selection.fraction={{.fraction}} \
+            selection.max_epochs={{.max_epochs}} \
+            selection.eigen_cutoff=-1 \
+            selection.sketching_dim={{.sketching_dim}} \
+            selection.simplex_method={{.simplex_method}} \
+            selection.optimizer.lr={{.lr}} \
+            selection.sparse_scale={{.sparse_scale}} \
+            selection.s_init_method={{.s_init_method}} \
+            selection.gamma_init_method={{.gamma_init_method}} \
+            selection.c={{.c}} \
+            selection.cls_pretrain_size={{.cls_pretrain_size}} \
+            selection.use_target={{.use_target}} \
+            selection.layers={{.layers}} \
+          overwrite={{.overwrite}} \
+          debug={{.debug}} \
+          seed={{.seed}} \
+          hydra/launcher={{.server}} {{.additional}}
+
+  selection1:pretrain-full-1:debug:
+    vars:
+      seed: 0
+      backbone: clip
+      fraction: 500
+      max_epochs: 2000
+      simplex_method: sort_pgd
+      s_init_method: random_m
+      gamma_init_method: uniform
+      lr: 1e-2
+      sparse_scale: 1e-3
+      c: 0.9
+      sketching_dim: 512
+      cls_pretrain_size: full-1
+      server: basic
+      use_target: True
+    cmds:
+      - |
+        task stanfordcars:clip:cov_ntk:selection1 fraction={{.fraction}} max_epochs={{.max_epochs}} sketching_dim={{.sketching_dim}} simplex_method={{.simplex_method}} optimizer.lr={{.lr}} sparse_scale={{.sparse_scale}} s_init_method={{.s_init_method}} gamma_init_method={{.gamma_init_method}} c={{.c}} cls_pretrain_size={{.cls_pretrain_size}} seed={{.seed}} server={{.server}} debug={{.debug}} overwrite={{.overwrite}} use_target={{.use_target}}
+
+  selection1:pretrain-full-1:sweep:
+    vars:
+      seed: 0,1,2,3,4
+      backbone: clip
+      fraction: 500,1000,2000,3000,4000
+      max_epochs: 2000
+      simplex_method: sort_pgd
+      s_init_method: random_m
+      gamma_init_method: uniform
+      lr: 1e-2
+      sparse_scale: 1e-3
+      c: 0.6,0.7,0.8,0.9
+      sketching_dim: 32,64,128,256,512
+      cls_pretrain_size: full-1
+      use_target: True
+    cmds:
+      - |
+        task stanfordcars:clip:cov_ntk:selection1 fraction={{.fraction}} max_epochs={{.max_epochs}} sketching_dim={{.sketching_dim}} simplex_method={{.simplex_method}} optimizer.lr={{.lr}} sparse_scale={{.sparse_scale}} s_init_method={{.s_init_method}} gamma_init_method={{.gamma_init_method}} c={{.c}} cls_pretrain_size={{.cls_pretrain_size}} seed={{.seed}} server={{.server}} debug={{.debug}} overwrite={{.overwrite}} use_target={{.use_target}}
+
+  ft1:pretrain-full-1:
+    vars:
+      main: finetune.py
+      use_target: True
+      additional: |
+        \
+            finetuning=clip_ft_adam_-1 \
+            +selection.c_conditioned=sampled \
+            finetuning.optimizer.lr=1e-1 \
+            finetuning.max_epochs=50
+    cmds:
+      - |
+        python {{.main}} -m \
+          dataset=stanfordcars \
+          backbone={{.backbone}} \
+          selection=cov_ntk \
+            selection.fraction={{.fraction}} \
+            selection.max_epochs={{.max_epochs}} \
+            selection.eigen_cutoff=-1 \
+            selection.sketching_dim={{.sketching_dim}} \
+            selection.simplex_method={{.simplex_method}} \
+            selection.optimizer.lr={{.lr}} \
+            selection.sparse_scale={{.sparse_scale}} \
+            selection.s_init_method={{.s_init_method}} \
+            selection.gamma_init_method={{.gamma_init_method}} \
+            selection.c={{.c}} \
+            selection.cls_pretrain_size={{.cls_pretrain_size}} \
+            selection.use_target={{.use_target}} \
+          overwrite={{.overwrite}} \
+          debug={{.debug}} \
+          seed={{.seed}} \
+          hydra/launcher={{.server}} {{.additional}}
+
+  ft1:pretrain-full-1:debug:
+    vars:
+      seed: 0
+      backbone: clip
+      fraction: 500
+      max_epochs: 2000
+      simplex_method: sort_pgd
+      s_init_method: random_m
+      gamma_init_method: uniform
+      lr: 1e-2
+      sparse_scale: 1e-3
+      c: 0.9
+      sketching_dim: 512
+      cls_pretrain_size: full-1
+      server: basic
+      use_target: True
+    cmds:
+      - |
+        task stanfordcars:clip:cov_ntk:ft1:pretrain-full-1 fraction={{.fraction}} max_epochs={{.max_epochs}} sketching_dim={{.sketching_dim}} simplex_method={{.simplex_method}} optimizer.lr={{.lr}} sparse_scale={{.sparse_scale}} s_init_method={{.s_init_method}} gamma_init_method={{.gamma_init_method}} c={{.c}} cls_pretrain_size={{.cls_pretrain_size}} seed={{.seed}} server={{.server}} debug={{.debug}} overwrite={{.overwrite}} use_target={{.use_target}}
+
+  ft1:pretrain-full-1:sweep:
+    vars:
+      seed: 0,1,2,3,4
+      backbone: clip
+      fraction: 500,1000,2000,3000,4000
+      max_epochs: 2000
+      simplex_method: sort_pgd
+      s_init_method: random_m
+      gamma_init_method: uniform
+      lr: 1e-2
+      sparse_scale: 1e-3
+      c: 0.6,0.7,0.8,0.9
+      sketching_dim: 32,64,128,256,512
+      cls_pretrain_size: full-1
+      use_target: True
+    cmds:
+      - |
+        task stanfordcars:clip:cov_ntk:ft1:pretrain-full-1 fraction={{.fraction}} max_epochs={{.max_epochs}} sketching_dim={{.sketching_dim}} simplex_method={{.simplex_method}} optimizer.lr={{.lr}} sparse_scale={{.sparse_scale}} s_init_method={{.s_init_method}} gamma_init_method={{.gamma_init_method}} c={{.c}} cls_pretrain_size={{.cls_pretrain_size}} seed={{.seed}} server={{.server}} debug={{.debug}} overwrite={{.overwrite}} use_target={{.use_target}}
+
+
+  selection2:
+    cmds:
+      - |
+        python {{.main}} -m \
+          dataset=stanfordcars \
+          backbone={{.backbone}} \
+          selection=cov_ntk \
+            selection.fraction={{.fraction}} \
+            selection.max_epochs={{.max_epochs}} \
+            selection.eigen_cutoff=-1 \
+            selection.sketching_dim={{.sketching_dim}} \
+            selection.simplex_method={{.simplex_method}} \
+            selection.optimizer.lr={{.lr}} \
+            selection.sparse_scale={{.sparse_scale}} \
+            selection.s_init_method={{.s_init_method}} \
+            selection.gamma_init_method={{.gamma_init_method}} \
+            selection.c={{.c}} \
+            selection.cls_pretrain_size={{.cls_pretrain_size}} \
+            selection.use_target={{.use_target}} \
+          overwrite={{.overwrite}} \
+          debug={{.debug}} \
+          seed={{.seed}} \
+          hydra/launcher={{.server}} {{.additional}}
+
+
+  selection2:pretrain-full-1:debug:
+    vars:
+      seed: 0
+      backbone: clip
+      fraction: 500
+      max_epochs: 2000
+      simplex_method: sort_pgd
+      s_init_method: random_m
+      gamma_init_method: uniform
+      lr: 1e-2
+      sparse_scale: 1e-3
+      c: 0.9
+      sketching_dim: 512
+      cls_pretrain_size: full-1
+      server: basic
+      use_target: True
+    cmds:
+      - |
+        task stanfordcars:clip:cov_ntk:selection2 fraction={{.fraction}} max_epochs={{.max_epochs}} sketching_dim={{.sketching_dim}} simplex_method={{.simplex_method}} optimizer.lr={{.lr}} sparse_scale={{.sparse_scale}} s_init_method={{.s_init_method}} gamma_init_method={{.gamma_init_method}} c={{.c}} cls_pretrain_size={{.cls_pretrain_size}} seed={{.seed}} server={{.server}} debug={{.debug}} overwrite={{.overwrite}} use_target={{.use_target}}
+
+
+  selection2:pretrain-full-2:debug:
+    vars:
+      seed: 0
+      backbone: clip
+      fraction: 500
+      max_epochs: 2000
+      simplex_method: sort_pgd
+      s_init_method: random_m
+      gamma_init_method: uniform
+      lr: 1e-2
+      sparse_scale: 1e-3
+      c: 0.9
+      sketching_dim: 512
+      cls_pretrain_size: full-2
+      server: basic
+      use_target: True
+    cmds:
+      - |
+        task stanfordcars:clip:cov_ntk:selection2 fraction={{.fraction}} max_epochs={{.max_epochs}} sketching_dim={{.sketching_dim}} simplex_method={{.simplex_method}} optimizer.lr={{.lr}} sparse_scale={{.sparse_scale}} s_init_method={{.s_init_method}} gamma_init_method={{.gamma_init_method}} c={{.c}} cls_pretrain_size={{.cls_pretrain_size}} seed={{.seed}} server={{.server}} debug={{.debug}} overwrite={{.overwrite}} use_target={{.use_target}}
+
+
+  selection2:pretrain-full-1:sweep:
+    vars:
+      seed: 0,1,2,3,4
+      backbone: clip
+      fraction: 500,1000,2000,3000,4000
+      max_epochs: 2000
+      simplex_method: sort_pgd
+      s_init_method: random_m
+      gamma_init_method: uniform
+      lr: 1e-2
+      sparse_scale: 1e-3
+      c: 0.6,0.7,0.8,0.9
+      sketching_dim: 32,64,128,256,512
+      cls_pretrain_size: full-1
+      use_target: True
+    cmds:
+      - |
+        task stanfordcars:clip:cov_ntk:selection2 fraction={{.fraction}} max_epochs={{.max_epochs}} sketching_dim={{.sketching_dim}} simplex_method={{.simplex_method}} optimizer.lr={{.lr}} sparse_scale={{.sparse_scale}} s_init_method={{.s_init_method}} gamma_init_method={{.gamma_init_method}} c={{.c}} cls_pretrain_size={{.cls_pretrain_size}} seed={{.seed}} server={{.server}} debug={{.debug}} overwrite={{.overwrite}} use_target={{.use_target}}
+  
+  selection2:pretrain-full-2:sweep:
+    vars:
+      seed: 0,1,2,3,4
+      backbone: clip
+      fraction: 500,1000,2000,3000,4000
+      max_epochs: 2000
+      simplex_method: sort_pgd
+      s_init_method: random_m
+      gamma_init_method: uniform
+      lr: 1e-2
+      sparse_scale: 1e-3
+      c: 0.6,0.7,0.8,0.9
+      sketching_dim: 32,64,128,256,512
+      cls_pretrain_size: full-2
+      use_target: True
+    cmds:
+      - |
+        task stanfordcars:clip:cov_ntk:selection2 fraction={{.fraction}} max_epochs={{.max_epochs}} sketching_dim={{.sketching_dim}} simplex_method={{.simplex_method}} optimizer.lr={{.lr}} sparse_scale={{.sparse_scale}} s_init_method={{.s_init_method}} gamma_init_method={{.gamma_init_method}} c={{.c}} cls_pretrain_size={{.cls_pretrain_size}} seed={{.seed}} server={{.server}} debug={{.debug}} overwrite={{.overwrite}} use_target={{.use_target}}
+
+
+  ft2:
+    vars:
+      main: finetune.py
+      use_target: True
+      additional: |
+        \
+            finetuning=clip_ft_adam_-2_decay \
+            +selection.c_conditioned=sampled \
+            finetuning.optimizer.weight_decay=0 \
+            finetuning.optimizer.feature_weight_decay=1 \
+            finetuning.optimizer.feature_lr_decay=1 \
+            finetuning.optimizer.lr=1e-1 \
+            finetuning.max_epochs=50
+    cmds:
+      - |
+        python {{.main}} -m \
+          dataset=stanfordcars \
+          backbone={{.backbone}} \
+          selection=cov_ntk \
+            selection.fraction={{.fraction}} \
+            selection.max_epochs={{.max_epochs}} \
+            selection.eigen_cutoff=-1 \
+            selection.sketching_dim={{.sketching_dim}} \
+            selection.simplex_method={{.simplex_method}} \
+            selection.optimizer.lr={{.lr}} \
+            selection.sparse_scale={{.sparse_scale}} \
+            selection.s_init_method={{.s_init_method}} \
+            selection.gamma_init_method={{.gamma_init_method}} \
+            selection.c={{.c}} \
+            selection.cls_pretrain_size={{.cls_pretrain_size}} \
+            selection.use_target={{.use_target}} \
+          overwrite={{.overwrite}} \
+          debug={{.debug}} \
+          seed={{.seed}} \
+          hydra/launcher={{.server}} {{.additional}}
+
+  ft2:pretrain-full-1:debug:
+    vars:
+      seed: 0
+      backbone: clip
+      fraction: 500
+      max_epochs: 2000
+      simplex_method: sort_pgd
+      s_init_method: random_m
+      gamma_init_method: uniform
+      lr: 1e-2
+      sparse_scale: 1e-3
+      c: 0.9
+      sketching_dim: 512
+      cls_pretrain_size: full-1
+    cmds:
+      - |
+        task stanfordcars:clip:cov_ntk:ft2 fraction={{.fraction}} max_epochs={{.max_epochs}} sketching_dim={{.sketching_dim}} simplex_method={{.simplex_method}} optimizer.lr={{.lr}} sparse_scale={{.sparse_scale}} s_init_method={{.s_init_method}} gamma_init_method={{.gamma_init_method}} c={{.c}} seed={{.seed}} server={{.server}} debug={{.debug}} overwrite={{.overwrite}} cls_pretrain_size={{.cls_pretrain_size}}
+    
+
+  ft2:pretrain-full-1:sweep:
+    vars:
+      seed: 0,1,2,3,4
+      backbone: clip
+      fraction: 500,1000,2000,3000,4000
+      max_epochs: 2000
+      simplex_method: sort_pgd
+      s_init_method: random_m
+      gamma_init_method: uniform
+      lr: 1e-2
+      sparse_scale: 1e-3
+      c: 0.6,0.7,0.8,0.9
+      sketching_dim: 32,64,128,256,512
+      cls_pretrain_size: full-1
+      use_target: True
+    cmds:
+      - |
+        task stanfordcars:clip:cov_ntk:ft2 fraction={{.fraction}} max_epochs={{.max_epochs}} sketching_dim={{.sketching_dim}} simplex_method={{.simplex_method}} optimizer.lr={{.lr}} sparse_scale={{.sparse_scale}} s_init_method={{.s_init_method}} gamma_init_method={{.gamma_init_method}} c={{.c}} seed={{.seed}} server={{.server}} debug={{.debug}} overwrite={{.overwrite}} cls_pretrain_size={{.cls_pretrain_size}} use_target={{.use_target}}
+
+  ft2:pretrain-full-2:debug:
+    vars:
+      seed: 0
+      backbone: clip
+      fraction: 500
+      max_epochs: 2000
+      simplex_method: sort_pgd
+      s_init_method: random_m
+      gamma_init_method: uniform
+      lr: 1e-2
+      sparse_scale: 1e-3
+      c: 0.9
+      sketching_dim: 512
+      cls_pretrain_size: full-2
+    cmds:
+      - |
+        task stanfordcars:clip:cov_ntk:ft2 fraction={{.fraction}} max_epochs={{.max_epochs}} sketching_dim={{.sketching_dim}} simplex_method={{.simplex_method}} optimizer.lr={{.lr}} sparse_scale={{.sparse_scale}} s_init_method={{.s_init_method}} gamma_init_method={{.gamma_init_method}} c={{.c}} seed={{.seed}} server={{.server}} debug={{.debug}} overwrite={{.overwrite}} cls_pretrain_size={{.cls_pretrain_size}}
+
+  ft2:pretrain-full-2:sweep:
+    vars:
+      seed: 0,1,2,3,4
+      backbone: clip
+      fraction: 500,1000,2000,3000,4000
+      max_epochs: 2000
+      simplex_method: sort_pgd
+      s_init_method: random_m
+      gamma_init_method: uniform
+      lr: 1e-2
+      sparse_scale: 1e-3
+      c: 0.6,0.7,0.8,0.9
+      sketching_dim: 32,64,128,256,512
+      cls_pretrain_size: full-2
+    cmds:
+      - |
+        task stanfordcars:clip:cov_ntk:ft2 fraction={{.fraction}} max_epochs={{.max_epochs}} sketching_dim={{.sketching_dim}} simplex_method={{.simplex_method}} optimizer.lr={{.lr}} sparse_scale={{.sparse_scale}} s_init_method={{.s_init_method}} gamma_init_method={{.gamma_init_method}} c={{.c}} seed={{.seed}} server={{.server}} debug={{.debug}} overwrite={{.overwrite}} cls_pretrain_size={{.cls_pretrain_size}}
+
+
+  # ft-2-debug:
+  #   vars:
+  #     main: finetune.py
+  #     seed: 0
+  #     backbone: clip
+  #     fraction: 500
+  #     max_epochs: 2000
+  #     simplex_method: sort_pgd
+  #     s_init_method: random_m
+  #     gamma_init_method: uniform
+  #     lr: 1e-2
+  #     sparse_scale: 1e-3
+  #     c: 0.6
+  #     sketching_dim: 64
+  #     additional: |
+  #       \
+  #       finetuning=clip_ft_adam_-2_decay \
+  #       +selection.c_conditioned=sampled \
+  #       finetuning.optimizer.weight_decay=0 \
+  #       finetuning.optimizer.feature_lr_decay=1 \
+  #       finetuning.optimizer.lr=1e-1 \
+  #       finetuning.max_epochs=50
+  #   cmds:
+  #     - |
+  #       python {{.main}} -m \
+  #         dataset=stanfordcars \
+  #         backbone={{.backbone}} \
+  #         selection=cov_ntk \
+  #           selection.fraction={{.fraction}} \
+  #           selection.max_epochs={{.max_epochs}} \
+  #           selection.eigen_cutoff=-1 \
+  #           selection.sketching_dim={{.sketching_dim}} \
+  #           selection.simplex_method={{.simplex_method}} \
+  #           selection.optimizer.lr={{.lr}} \
+  #           selection.sparse_scale={{.sparse_scale}} \
+  #           selection.s_init_method={{.s_init_method}} \
+  #           selection.gamma_init_method={{.gamma_init_method}} \
+  #           selection.c={{.c}} \
+  #         overwrite={{.overwrite}} \
+  #         debug={{.debug}} \
+  #         seed={{.seed}} \
+  #         hydra/launcher={{.server}} {{.additional}}
+
+
+  # ft-2-wd-debug:
+  #   vars:
+  #     main: finetune.py
+  #     seed: 0
+  #     backbone: clip
+  #     fraction: 500,1000,2000,3000,4000,5000
+  #     max_epochs: 2000
+  #     simplex_method: sort_pgd
+  #     s_init_method: random_m
+  #     gamma_init_method: uniform
+  #     selection_optimizer_lr: 1e-2
+  #     sparse_scale: 1e-3
+  #     c: 0.6
+  #     sketching_dim: 64,128,256,512
+  #     additional: |
+  #       \
+  #       finetuning=clip_ft_adam_weight_decay \
+  #       finetuning.layers=-2 \
+  #       +selection.c_conditioned=sampled \
+  #       finetuning.optimizer.weight_decay=0 \
+  #       finetuning.optimizer.feature_weight_decay=1e-6,1e-5,1e-4,1e-3,1e-2,1e-1 \
+  #       finetuning.optimizer.lr=1e-1 \
+  #       finetuning.optimizer.feature_lr_decay=1e-3 \
+  #       finetuning.max_epochs=50
+  #   cmds:
+  #     - |
+  #       python {{.main}} -m \
+  #         dataset=stanfordcars \
+  #         backbone={{.backbone}} \
+  #         selection=cov_ntk \
+  #           selection.fraction={{.fraction}} \
+  #           selection.max_epochs={{.max_epochs}} \
+  #           selection.eigen_cutoff=-1 \
+  #           selection.sketching_dim={{.sketching_dim}} \
+  #           selection.simplex_method={{.simplex_method}} \
+  #           selection.optimizer.lr={{.selection_optimizer_lr}} \
+  #           selection.sparse_scale={{.sparse_scale}} \
+  #           selection.s_init_method={{.s_init_method}} \
+  #           selection.gamma_init_method={{.gamma_init_method}} \
+  #           selection.c={{.c}} \
+  #         overwrite={{.overwrite}} \
+  #         debug={{.debug}} \
+  #         seed={{.seed}} \
+  #         hydra/launcher={{.server}} {{.additional}}
+
+
+  # ft-2:
+  #   deps:
+  #     - selection
+  #   vars:
+  #     main: finetune.py
+  #     additional: |
+  #       \
+  #       finetuning=clip_ft_adam_-2_decay \
+  #       +selection.c_conditioned=sampled \
+  #       finetuning.optimizer.weight_decay=0 \
+  #       finetuning.optimizer.feature_lr_decay=1 \
+  #       finetuning.optimizer.lr=1e-1 \
+  #       finetuning.max_epochs=50
+  #   cmds:
+  #     - |
+  #       python {{.main}} -m \
+  #         dataset=stanfordcars \
+  #         backbone={{.backbone}} \
+  #         selection=cov_ntk \
+  #           selection.fraction={{.fraction}} \
+  #           selection.max_epochs={{.max_epochs}} \
+  #           selection.eigen_cutoff=-1 \
+  #           selection.sketching_dim={{.sketching_dim}} \
+  #           selection.simplex_method={{.simplex_method}} \
+  #           selection.optimizer.lr={{.lr}} \
+  #           selection.sparse_scale={{.sparse_scale}} \
+  #           selection.s_init_method={{.s_init_method}} \
+  #           selection.gamma_init_method={{.gamma_init_method}} \
+  #           selection.c={{.c}} \
+  #         overwrite={{.overwrite}} \
+  #         debug={{.debug}} \
+  #         seed={{.seed}} \
+  #         hydra/launcher={{.server}} {{.additional}}
+
+
+  # selection-3-debug:
+  #   vars:
+  #     main: data_select.py
+  #     seed: 0
+  #     backbone: clip
+  #     fraction: 1000
+  #     max_epochs: 2000
+  #     simplex_method: sort_pgd
+  #     s_init_method: random_m
+  #     gamma_init_method: uniform
+  #     lr: 1e-2
+  #     sparse_scale: 1e-3
+  #     c: 0.9
+  #     sketching_dim: 64
+  #     layers: -3
+  #     server: basic
+  #   cmds:
+  #     - |
+  #       python {{.main}} -m \
+  #         dataset=stanfordcars \
+  #         backbone={{.backbone}} \
+  #         selection=cov_ntk \
+  #           selection.fraction={{.fraction}} \
+  #           selection.max_epochs={{.max_epochs}} \
+  #           selection.eigen_cutoff=-1 \
+  #           selection.sketching_dim={{.sketching_dim}} \
+  #           selection.simplex_method={{.simplex_method}} \
+  #           selection.optimizer.lr={{.lr}} \
+  #           selection.sparse_scale={{.sparse_scale}} \
+  #           selection.s_init_method={{.s_init_method}} \
+  #           selection.gamma_init_method={{.gamma_init_method}} \
+  #           selection.c={{.c}} \
+  #           selection.layers={{.layers}} \
+  #         overwrite={{.overwrite}} \
+  #         debug={{.debug}} \
+  #         seed={{.seed}} \
+  #         hydra/launcher={{.server}} {{.additional}}
+
+
+  # selection-3:
+  #   vars:
+  #     main: data_select.py
+  #     seed: 0,1,2,3,4
+  #     backbone: clip
+  #     fraction: 500,1000,2000,3000,4000
+  #     max_epochs: 2000
+  #     simplex_method: sort_pgd
+  #     s_init_method: random_m
+  #     gamma_init_method: uniform
+  #     lr: 1e-2
+  #     sparse_scale: 0,1e-3
+  #     c: 0.6,0.7,0.8,0.9
+  #     sketching_dim: 32,64,128,256,512
+  #     layers: -3
+  #   cmds:
+  #     - |
+  #       python {{.main}} -m \
+  #         dataset=stanfordcars \
+  #         backbone={{.backbone}} \
+  #         selection=cov_ntk \
+  #           selection.fraction={{.fraction}} \
+  #           selection.max_epochs={{.max_epochs}} \
+  #           selection.eigen_cutoff=-1 \
+  #           selection.sketching_dim={{.sketching_dim}} \
+  #           selection.simplex_method={{.simplex_method}} \
+  #           selection.optimizer.lr={{.lr}} \
+  #           selection.sparse_scale={{.sparse_scale}} \
+  #           selection.s_init_method={{.s_init_method}} \
+  #           selection.gamma_init_method={{.gamma_init_method}} \
+  #           selection.c={{.c}} \
+  #           selection.layers={{.layers}} \
+  #         overwrite={{.overwrite}} \
+  #         debug={{.debug}} \
+  #         seed={{.seed}} \
+  #         hydra/launcher={{.server}} {{.additional}}
+
+
+  # ft-3-debug:
+  #   vars:
+  #     main: finetune.py
+  #     seed: 0
+  #     backbone: clip
+  #     fraction: 1000
+  #     max_epochs: 2000
+  #     simplex_method: sort_pgd
+  #     s_init_method: random_m
+  #     gamma_init_method: uniform
+  #     lr: 1e-2
+  #     sparse_scale: 1e-3
+  #     c: 0.9
+  #     sketching_dim: 512
+  #     layers: -2
+  #     additional: |
+  #       \
+  #       finetuning=clip_ft_adam_-3_weight_decay \
+  #       +selection.c_conditioned=sampled \
+  #       finetuning.max_epochs=50 \
+  #       finetuning.optimizer.lr=1e-1 \
+  #       finetuning.optimizer.weight_decay=0 \
+  #       finetuning.optimizer.feature_lr_decay=1e-4,1e-3,1e-2,1e-1,1 \
+  #       finetuning.optimizer.feature_weight_decay=1e-6,1e-5,1e-4,1e-3,1e-2,1e-1
+  #   cmds:
+  #     - |
+  #       python {{.main}} -m \
+  #         dataset=stanfordcars \
+  #         backbone={{.backbone}} \
+  #         selection=cov_ntk \
+  #           selection.fraction={{.fraction}} \
+  #           selection.max_epochs={{.max_epochs}} \
+  #           selection.eigen_cutoff=-1 \
+  #           selection.sketching_dim={{.sketching_dim}} \
+  #           selection.simplex_method={{.simplex_method}} \
+  #           selection.optimizer.lr={{.lr}} \
+  #           selection.sparse_scale={{.sparse_scale}} \
+  #           selection.s_init_method={{.s_init_method}} \
+  #           selection.gamma_init_method={{.gamma_init_method}} \
+  #           selection.c={{.c}} \
+  #           selection.layers={{.layers}} \
+  #         overwrite={{.overwrite}} \
+  #         debug={{.debug}} \
+  #         seed={{.seed}} \
+  #         hydra/launcher={{.server}} {{.additional}}
+
+
+  # ft-3:
+  #   deps:
+  #     - selection-3
+  #   vars:
+  #     seed: 0,1,2,3,4
+  #     backbone: clip
+  #     fraction: 500,1000,2000,3000,4000
+  #     max_epochs: 2000
+  #     simplex_method: sort_pgd
+  #     s_init_method: random_m
+  #     gamma_init_method: uniform
+  #     lr: 1e-2
+  #     sparse_scale: 0,1e-3
+  #     c: 0.6,0.7,0.8,0.9
+  #     sketching_dim: 32,64,128,256,512
+  #     layers: -3
+  #     main: finetune.py
+  #     additional: |
+  #       \
+  #       finetuning=clip_ft_adam_-3_decay \
+  #       +selection.c_conditioned=sampled
+  #   cmds:
+  #     - |
+  #       python {{.main}} -m \
+  #         dataset=stanfordcars \
+  #         backbone={{.backbone}} \
+  #         selection=cov_ntk \
+  #           selection.fraction={{.fraction}} \
+  #           selection.max_epochs={{.max_epochs}} \
+  #           selection.eigen_cutoff=-1 \
+  #           selection.sketching_dim={{.sketching_dim}} \
+  #           selection.simplex_method={{.simplex_method}} \
+  #           selection.optimizer.lr={{.lr}} \
+  #           selection.sparse_scale={{.sparse_scale}} \
+  #           selection.s_init_method={{.s_init_method}} \
+  #           selection.gamma_init_method={{.gamma_init_method}} \
+  #           selection.c={{.c}} \
+  #           selection.layers={{.layers}} \
+  #         overwrite={{.overwrite}} \
+  #         debug={{.debug}} \
+  #         seed={{.seed}} \
+  #         hydra/launcher={{.server}} {{.additional}}
+  
+
+  # ft-cross:

@@ -1,0 +1,10 @@
+defaults:
+  - optimizer: sgd
+  - scheduler: none
+feature_norm: true
+train_batch_size: 256
+val_batch_size: 32
+test_batch_size: 32
+max_epochs: 28
+seed: 0
+str: train_batch_size=${.train_batch_size}-${.optimizer.str}-scheduler=${.scheduler.str}

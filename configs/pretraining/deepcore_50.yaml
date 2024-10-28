@@ -1,0 +1,8 @@
+defaults:
+  - optimizer: sgd_deepcore
+  - scheduler: cosine_annealing_lr
+batch_size: 128
+max_epochs: 50
+
+seed: 0
+str: batch_size=${.batch_size}-${.optimizer.str}-scheduler=${.scheduler.str}-seed=${.seed}

@@ -1,0 +1,10 @@
+defaults:
+  - dataset: cifar10
+  - training: deepcore
+  - backbone: resnet50
+
+method: glister
+fraction: 0.01
+seed: 0
+
+str: ${.method}-${.fraction}-${.seed}

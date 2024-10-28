@@ -1,0 +1,860 @@
+version: "3"
+run: when_changed
+
+vars:
+  backbone: '{{.backbone | default "clip"}}'
+  seed: "{{.seed | default 0}}"
+  debug: "{{.debug | default false}}"
+  main: '{{.main | default "data_select.py"}}'
+  overwrite: "{{.overwrite | default false}}"
+  dataset: '{{.dataset | default "cifar10"}}'
+  selection: '{{.selection | default "random"}}'
+  additional: '{{.additional | default ""}}'
+  c: '{{.c | default "0.99" }}'
+  c_conditioned: '{{.c_conditioned | default "False"}}'
+  sketching_dim: "{{.sketching_dim | default 512}}"
+  mix_fraction: "{{.mix_fraction | default 0.4}}"
+  fraction: "{{.fraction | default 1000}}"
+  layers: "{{.layers | default -2}}"
+  k: "{{.k | default 512}}"
+  max_epochs: "{{.max_epochs | default 2000}}"
+  use_target: '{{.use_target | default "random" }}'
+  # ft_fraction: "{{.ft_fraction | default '50,100,200,500,1000'}}"
+  # ----------------- finetuning -----------------
+  # seed: 0,1,2,3,4
+  # backbone: resnet18
+  # fraction: 500,1000,2000,3000,4000
+  # max_epochs: 2000
+  # simplex_method: sort_pgd
+  # s_init_method: random_m
+  # gamma_init_method: uniform
+  # lr: 1e-2
+  # sparse_scale: 1e-3
+  # c: 0.6,0.7,0.8,0.9
+  # sketching_dim: 64,128,256,512
+
+  # ----------------- debug -----------------
+  # seed: 0
+  # backbone: resnet18
+  # fraction: 500
+  # max_epochs: 2000
+  # simplex_method: sort_pgd
+  # s_init_method: random_m
+  # gamma_init_method: uniform
+  # lr: 1e-2
+  # sparse_scale: 1e-3
+  # c: 0.9
+  # sketching_dim: 512
+  # cls_pretrain_size: full
+
+
+
+tasks:
+  selection1:
+    vars:
+      layers: -1
+    cmds:
+      - |
+        python {{.main}} -m \
+          dataset=cifar10 \
+          backbone={{.backbone}} \
+          selection=cov_ntk \
+            selection.fraction={{.fraction}} \
+            selection.max_epochs={{.max_epochs}} \
+            selection.eigen_cutoff=-1 \
+            selection.sketching_dim={{.sketching_dim}} \
+            selection.simplex_method={{.simplex_method}} \
+            selection.optimizer.lr={{.lr}} \
+            selection.sparse_scale={{.sparse_scale}} \
+            selection.s_init_method={{.s_init_method}} \
+            selection.gamma_init_method={{.gamma_init_method}} \
+            selection.c={{.c}} \
+            selection.cls_pretrain_size={{.cls_pretrain_size}} \
+            selection.use_target={{.use_target}} \
+            selection.layers={{.layers}} \
+          overwrite={{.overwrite}} \
+          debug={{.debug}} \
+          seed={{.seed}} \
+          hydra/launcher={{.server}} {{.additional}}
+
+  cov2:selection:
+    vars:
+      seed: 0,1,2,3,4
+      backbone: resnet18
+      dataset: cifar10
+      fraction: 500,1000,1500,2000,2500,3000,3500,4000
+      max_epochs: 2000
+      simplex_method: sort_pgd
+      s_init_method: random_m
+      gamma_init_method: uniform
+      lr: 1e-2
+      sparse_scale: 1e-3
+      c: 0.6,0.7,0.8,0.9,0.99
+      sketching_dim: 32,64,128,256,512
+      use_target: random
+    cmds:
+      - |
+        python {{.main}} -m \
+          dataset={{.dataset}} \
+          backbone={{.backbone}} \
+          selection=cov_ntk \
+            selection.fraction={{.fraction}} \
+            selection.max_epochs={{.max_epochs}} \
+            selection.eigen_cutoff=-1 \
+            selection.sketching_dim={{.sketching_dim}} \
+            selection.simplex_method={{.simplex_method}} \
+            selection.optimizer.lr={{.lr}} \
+            selection.sparse_scale={{.sparse_scale}} \
+            selection.s_init_method={{.s_init_method}} \
+            selection.gamma_init_method={{.gamma_init_method}} \
+            selection.c={{.c}} \
+            selection.use_target={{.use_target}} \
+          overwrite={{.overwrite}} \
+          debug={{.debug}} \
+          seed={{.seed}} \
+          hydra/launcher={{.server}} {{.additional}}
+
+  cov2:ft2:
+    vars:
+      seed: 0,1,2,3,4
+      backbone: resnet18
+      fraction: 500,1000,1500,2000,2500,3000,3500,4000
+      max_epochs: 2000
+      simplex_method: sort_pgd
+      s_init_method: random_m
+      gamma_init_method: uniform
+      lr: 1e-2
+      sparse_scale: 1e-3
+      c: 0.6,0.7,0.8,0.9,0.99
+      sketching_dim: 32,64,128,256,512
+      use_target: random
+      main: finetune.py
+      additional: |
+        \
+            finetuning=clip_ft_adam_-2_decay \
+            +selection.c_conditioned=True \
+            finetuning.optimizer.weight_decay=0 \
+            finetuning.optimizer.feature_weight_decay=0 \
+            finetuning.optimizer.feature_lr_decay=1 \
+            finetuning.optimizer.lr=1e-2 \
+            finetuning.max_epochs=50
+    cmds:
+      - |
+        python {{.main}} -m \
+          dataset=cifar10 \
+          backbone={{.backbone}} \
+          selection=cov_ntk \
+            selection.fraction={{.fraction}} \
+            selection.max_epochs={{.max_epochs}} \
+            selection.eigen_cutoff=-1 \
+            selection.sketching_dim={{.sketching_dim}} \
+            selection.simplex_method={{.simplex_method}} \
+            selection.optimizer.lr={{.lr}} \
+            selection.sparse_scale={{.sparse_scale}} \
+            selection.s_init_method={{.s_init_method}} \
+            selection.gamma_init_method={{.gamma_init_method}} \
+            selection.c={{.c}} \
+            selection.use_target={{.use_target}} \
+          overwrite={{.overwrite}} \
+          debug={{.debug}} \
+          seed={{.seed}} \
+          hydra/launcher={{.server}} {{.additional}}
+  
+  cov2:ft:debug:
+    vars:
+      seed: 0
+      backbone: resnet18
+      fraction: 500
+      max_epochs: 2000
+      simplex_method: sort_pgd
+      s_init_method: random_m
+      gamma_init_method: uniform
+      lr: 1e-2
+      sparse_scale: 1e-3
+      c: 0.9
+      sketching_dim: 512
+      server: basic
+      use_target: random
+      main: finetune.py
+      additional: |
+        \
+        finetuning=clip_ft_adam_-2_decay \
+        +selection.c_conditioned=True \
+        finetuning.optimizer.weight_decay=0 \
+        finetuning.optimizer.feature_weight_decay=0 \
+        finetuning.optimizer.feature_lr_decay=1 \
+        finetuning.optimizer.lr=1e-2 \
+        finetuning.max_epochs=50
+    cmds:
+      - |
+        python {{.main}} -m \
+          dataset=cifar10 \
+          backbone={{.backbone}} \
+          selection=cov_ntk \
+            selection.fraction={{.fraction}} \
+            selection.max_epochs={{.max_epochs}} \
+            selection.eigen_cutoff=-1 \
+            selection.sketching_dim={{.sketching_dim}} \
+            selection.simplex_method={{.simplex_method}} \
+            selection.optimizer.lr={{.lr}} \
+            selection.sparse_scale={{.sparse_scale}} \
+            selection.s_init_method={{.s_init_method}} \
+            selection.gamma_init_method={{.gamma_init_method}} \
+            selection.c={{.c}} \
+            selection.use_target={{.use_target}} \
+          overwrite={{.overwrite}} \
+          debug={{.debug}} \
+          seed={{.seed}} \
+          hydra/launcher={{.server}} {{.additional}}
+
+  selection1:pretrain-full-1:debug:
+    vars:
+      seed: 0
+      backbone: resnet18
+      fraction: 500
+      max_epochs: 2000
+      simplex_method: sort_pgd
+      s_init_method: random_m
+      gamma_init_method: uniform
+      lr: 1e-2
+      sparse_scale: 1e-3
+      c: 0.9
+      sketching_dim: 512
+      cls_pretrain_size: full-1
+      server: basic
+      use_target: True
+    cmds:
+      - |
+        task cifar10:clip:cov_ntk:selection1 fraction={{.fraction}} max_epochs={{.max_epochs}} sketching_dim={{.sketching_dim}} simplex_method={{.simplex_method}} optimizer.lr={{.lr}} sparse_scale={{.sparse_scale}} s_init_method={{.s_init_method}} gamma_init_method={{.gamma_init_method}} c={{.c}} cls_pretrain_size={{.cls_pretrain_size}} seed={{.seed}} server={{.server}} debug={{.debug}} overwrite={{.overwrite}} use_target={{.use_target}}
+
+  selection1:pretrain-full-1:sweep:
+    vars:
+      seed: 0,1,2,3,4
+      backbone: resnet18
+      fraction: 500,1000,2000,3000,4000
+      max_epochs: 2000
+      simplex_method: sort_pgd
+      s_init_method: random_m
+      gamma_init_method: uniform
+      lr: 1e-2
+      sparse_scale: 1e-3
+      c: 0.6,0.7,0.8,0.9
+      sketching_dim: 32,64,128,256,512
+      cls_pretrain_size: full-1
+      use_target: True
+    cmds:
+      - |
+        task cifar10:clip:cov_ntk:selection1 fraction={{.fraction}} max_epochs={{.max_epochs}} sketching_dim={{.sketching_dim}} simplex_method={{.simplex_method}} optimizer.lr={{.lr}} sparse_scale={{.sparse_scale}} s_init_method={{.s_init_method}} gamma_init_method={{.gamma_init_method}} c={{.c}} cls_pretrain_size={{.cls_pretrain_size}} seed={{.seed}} server={{.server}} debug={{.debug}} overwrite={{.overwrite}} use_target={{.use_target}}
+
+  ft1:pretrain-full-1:
+    vars:
+      main: finetune.py
+      use_target: True
+      additional: |
+        \
+            finetuning=clip_ft_adam_-1 \
+            +selection.c_conditioned=sampled \
+            finetuning.optimizer.lr=1e-1 \
+            finetuning.max_epochs=50
+    cmds:
+      - |
+        python {{.main}} -m \
+          dataset=cifar10 \
+          backbone={{.backbone}} \
+          selection=cov_ntk \
+            selection.fraction={{.fraction}} \
+            selection.max_epochs={{.max_epochs}} \
+            selection.eigen_cutoff=-1 \
+            selection.sketching_dim={{.sketching_dim}} \
+            selection.simplex_method={{.simplex_method}} \
+            selection.optimizer.lr={{.lr}} \
+            selection.sparse_scale={{.sparse_scale}} \
+            selection.s_init_method={{.s_init_method}} \
+            selection.gamma_init_method={{.gamma_init_method}} \
+            selection.c={{.c}} \
+            selection.cls_pretrain_size={{.cls_pretrain_size}} \
+            selection.use_target={{.use_target}} \
+          overwrite={{.overwrite}} \
+          debug={{.debug}} \
+          seed={{.seed}} \
+          hydra/launcher={{.server}} {{.additional}}
+
+  ft1:pretrain-full-1:debug:
+    vars:
+      seed: 0
+      backbone: resnet18
+      fraction: 500
+      max_epochs: 2000
+      simplex_method: sort_pgd
+      s_init_method: random_m
+      gamma_init_method: uniform
+      lr: 1e-2
+      sparse_scale: 1e-3
+      c: 0.9
+      sketching_dim: 512
+      cls_pretrain_size: full-1
+      server: basic
+      use_target: True
+    cmds:
+      - |
+        task cifar10:clip:cov_ntk:ft1:pretrain-full-1 fraction={{.fraction}} max_epochs={{.max_epochs}} sketching_dim={{.sketching_dim}} simplex_method={{.simplex_method}} optimizer.lr={{.lr}} sparse_scale={{.sparse_scale}} s_init_method={{.s_init_method}} gamma_init_method={{.gamma_init_method}} c={{.c}} cls_pretrain_size={{.cls_pretrain_size}} seed={{.seed}} server={{.server}} debug={{.debug}} overwrite={{.overwrite}} use_target={{.use_target}}
+
+  ft1:pretrain-full-1:sweep:
+    vars:
+      seed: 0,1,2,3,4
+      backbone: resnet18
+      fraction: 500,1000,2000,3000,4000
+      max_epochs: 2000
+      simplex_method: sort_pgd
+      s_init_method: random_m
+      gamma_init_method: uniform
+      lr: 1e-2
+      sparse_scale: 1e-3
+      c: 0.6,0.7,0.8,0.9
+      sketching_dim: 32,64,128,256,512
+      cls_pretrain_size: full-1
+      use_target: True
+    cmds:
+      - |
+        task cifar10:clip:cov_ntk:ft1:pretrain-full-1 fraction={{.fraction}} max_epochs={{.max_epochs}} sketching_dim={{.sketching_dim}} simplex_method={{.simplex_method}} optimizer.lr={{.lr}} sparse_scale={{.sparse_scale}} s_init_method={{.s_init_method}} gamma_init_method={{.gamma_init_method}} c={{.c}} cls_pretrain_size={{.cls_pretrain_size}} seed={{.seed}} server={{.server}} debug={{.debug}} overwrite={{.overwrite}} use_target={{.use_target}}
+
+
+  selection2:
+    cmds:
+      - |
+        python {{.main}} -m \
+          dataset=cifar10 \
+          backbone={{.backbone}} \
+          selection=cov_ntk \
+            selection.fraction={{.fraction}} \
+            selection.max_epochs={{.max_epochs}} \
+            selection.eigen_cutoff=-1 \
+            selection.sketching_dim={{.sketching_dim}} \
+            selection.simplex_method={{.simplex_method}} \
+            selection.optimizer.lr={{.lr}} \
+            selection.sparse_scale={{.sparse_scale}} \
+            selection.s_init_method={{.s_init_method}} \
+            selection.gamma_init_method={{.gamma_init_method}} \
+            selection.c={{.c}} \
+            selection.cls_pretrain_size={{.cls_pretrain_size}} \
+            selection.use_target={{.use_target}} \
+          overwrite={{.overwrite}} \
+          debug={{.debug}} \
+          seed={{.seed}} \
+          hydra/launcher={{.server}} {{.additional}}
+
+  selection2:sweep:
+    vars:
+      seed: 0,1,2,3,4
+      backbone: resnet18
+      dataset: cifar10
+      fraction: 500,1000,1500,2000,2500,3000,3500,4000
+      max_epochs: 2000
+      simplex_method: sort_pgd
+      s_init_method: random_m
+      gamma_init_method: uniform
+      lr: 1e-2
+      sparse_scale: 1e-3
+      c: 0.6,0.7,0.8,0.9,0.99
+      sketching_dim: 32,64,128,256,512
+      use_target: random
+    cmds:
+      - |
+        python {{.main}} -m \
+          dataset={{.dataset}} \
+          backbone={{.backbone}} \
+          selection=cov_ntk \
+            selection.fraction={{.fraction}} \
+            selection.max_epochs={{.max_epochs}} \
+            selection.eigen_cutoff=-1 \
+            selection.sketching_dim={{.sketching_dim}} \
+            selection.simplex_method={{.simplex_method}} \
+            selection.optimizer.lr={{.lr}} \
+            selection.sparse_scale={{.sparse_scale}} \
+            selection.s_init_method={{.s_init_method}} \
+            selection.gamma_init_method={{.gamma_init_method}} \
+            selection.c={{.c}} \
+            selection.use_target={{.use_target}} \
+          overwrite={{.overwrite}} \
+          debug={{.debug}} \
+          seed={{.seed}} \
+          hydra/launcher={{.server}} {{.additional}}
+
+  ft2:
+    vars:
+      main: finetune.py
+      use_target: random
+      additional: |
+        \
+            finetuning=clip_ft_adam_-2_decay \
+            +selection.c_conditioned=sampled \
+            finetuning.optimizer.weight_decay=0 \
+            finetuning.optimizer.feature_weight_decay=0 \
+            finetuning.optimizer.feature_lr_decay=1 \
+            finetuning.optimizer.lr=1e-2 \
+            finetuning.max_epochs=50
+    cmds:
+      - |
+        python {{.main}} -m \
+          dataset=cifar10 \
+          backbone={{.backbone}} \
+          selection=cov_ntk \
+            selection.fraction={{.fraction}} \
+            selection.max_epochs={{.max_epochs}} \
+            selection.eigen_cutoff=-1 \
+            selection.sketching_dim={{.sketching_dim}} \
+            selection.simplex_method={{.simplex_method}} \
+            selection.optimizer.lr={{.lr}} \
+            selection.sparse_scale={{.sparse_scale}} \
+            selection.s_init_method={{.s_init_method}} \
+            selection.gamma_init_method={{.gamma_init_method}} \
+            selection.c={{.c}} \
+            selection.cls_pretrain_size={{.cls_pretrain_size}} \
+            selection.use_target={{.use_target}} \
+          overwrite={{.overwrite}} \
+          debug={{.debug}} \
+          seed={{.seed}} \
+          hydra/launcher={{.server}} {{.additional}}
+  
+  ft2:sweep:
+    vars:
+      seed: 0,1,2,3,4
+      backbone: resnet18
+      fraction: 500,1000,1500,2000,2500,3000,3500,4000
+      simplex_method: sort_pgd
+      s_init_method: random_m
+      gamma_init_method: uniform
+      lr: 1e-2
+      sparse_scale: 1e-3
+      c: 0.6,0.7,0.8,0.9
+      sketching_dim: 32,64,128,256,512
+      selection_max_epochs: 2000
+      main: finetune.py
+      additional: |
+        \
+            finetuning=clip_ft_adam_-2_decay \
+            +selection.c_conditioned=sampled \
+            finetuning.optimizer.weight_decay=0 \
+            finetuning.optimizer.feature_weight_decay=0 \
+            finetuning.optimizer.feature_lr_decay=1 \
+            finetuning.optimizer.lr=1e-2 \
+            finetuning.max_epochs=50
+    cmds:
+      - |
+        python {{.main}} -m \
+          dataset=cifar10 \
+          backbone={{.backbone}} \
+          selection=cov_ntk \
+            selection.fraction={{.fraction}} \
+            selection.max_epochs={{.selection_max_epochs}} \
+            selection.eigen_cutoff=-1 \
+            selection.sketching_dim={{.sketching_dim}} \
+            selection.simplex_method={{.simplex_method}} \
+            selection.optimizer.lr={{.lr}} \
+            selection.sparse_scale={{.sparse_scale}} \
+            selection.s_init_method={{.s_init_method}} \
+            selection.gamma_init_method={{.gamma_init_method}} \
+            selection.c={{.c}} \
+            selection.use_target={{.use_target}} \
+          overwrite={{.overwrite}} \
+          debug={{.debug}} \
+          seed={{.seed}} \
+          hydra/launcher={{.server}} {{.additional}}
+
+  ft2-wd:sweep:
+    vars:
+      seed: 0,1,2,3,4
+      backbone: resnet18
+      fraction: 500,1000
+      max_epochs: 2000
+      simplex_method: sort_pgd
+      s_init_method: random_m
+      gamma_init_method: uniform
+      lr: 1e-2
+      sparse_scale: 1e-3
+      c: 0.6,0.7,0.8,0.9
+      sketching_dim: 32,64,128,256,512
+      selection_max_epochs: 2000
+      main: finetune.py
+      additional: |
+        \
+            finetuning=clip_ft_adam_-2_decay \
+            +selection.c_conditionedsq=True \
+            finetuning.optimizer.weight_decay=0 \
+            finetuning.optimizer.feature_weight_decay=1e-3 \
+            finetuning.optimizer.feature_lr_decay=1 \
+            finetuning.optimizer.lr=1e-2 \
+            finetuning.max_epochs=50
+    cmds:
+      - |
+        python {{.main}} -m \
+          dataset=cifar10 \
+          backbone={{.backbone}} \
+          selection=cov_ntk \
+            selection.fraction={{.fraction}} \
+            selection.max_epochs={{.selection_max_epochs}} \
+            selection.eigen_cutoff=-1 \
+            selection.sketching_dim={{.sketching_dim}} \
+            selection.simplex_method={{.simplex_method}} \
+            selection.optimizer.lr={{.lr}} \
+            selection.sparse_scale={{.sparse_scale}} \
+            selection.s_init_method={{.s_init_method}} \
+            selection.gamma_init_method={{.gamma_init_method}} \
+            selection.c={{.c}} \
+            selection.use_target={{.use_target}} \
+          overwrite={{.overwrite}} \
+          debug={{.debug}} \
+          seed={{.seed}} \
+          hydra/launcher={{.server}} {{.additional}}
+
+
+
+
+  selection2:pretrain-full-1:debug:
+    vars:
+      seed: 0
+      backbone: resnet18
+      fraction: 500
+      max_epochs: 2000
+      simplex_method: sort_pgd
+      s_init_method: random_m
+      gamma_init_method: uniform
+      lr: 1e-2
+      sparse_scale: 1e-3
+      c: 0.9
+      sketching_dim: 512
+      cls_pretrain_size: full-1
+      server: basic
+      use_target: True
+    cmds:
+      - |
+        task cifar10:clip:cov_ntk:selection2 fraction={{.fraction}} max_epochs={{.max_epochs}} sketching_dim={{.sketching_dim}} simplex_method={{.simplex_method}} optimizer.lr={{.lr}} sparse_scale={{.sparse_scale}} s_init_method={{.s_init_method}} gamma_init_method={{.gamma_init_method}} c={{.c}} cls_pretrain_size={{.cls_pretrain_size}} seed={{.seed}} server={{.server}} debug={{.debug}} overwrite={{.overwrite}} use_target={{.use_target}}
+
+
+  selection2:pretrain-full-2:debug:
+    vars:
+      seed: 0
+      backbone: resnet18
+      fraction: 500
+      max_epochs: 2000
+      simplex_method: sort_pgd
+      s_init_method: random_m
+      gamma_init_method: uniform
+      lr: 1e-2
+      sparse_scale: 1e-3
+      c: 0.9
+      sketching_dim: 512
+      cls_pretrain_size: full-2
+      server: basic
+      use_target: True
+    cmds:
+      - |
+        task cifar10:clip:cov_ntk:selection2 fraction={{.fraction}} max_epochs={{.max_epochs}} sketching_dim={{.sketching_dim}} simplex_method={{.simplex_method}} optimizer.lr={{.lr}} sparse_scale={{.sparse_scale}} s_init_method={{.s_init_method}} gamma_init_method={{.gamma_init_method}} c={{.c}} cls_pretrain_size={{.cls_pretrain_size}} seed={{.seed}} server={{.server}} debug={{.debug}} overwrite={{.overwrite}} use_target={{.use_target}}
+
+
+  selection2:pretrain-full-1:sweep:
+    vars:
+      seed: 0,1,2,3,4
+      backbone: resnet18
+      fraction: 500,1000,2000,3000,4000
+      max_epochs: 2000
+      simplex_method: sort_pgd
+      s_init_method: random_m
+      gamma_init_method: uniform
+      lr: 1e-2
+      sparse_scale: 1e-3
+      c: 0.6,0.7,0.8,0.9
+      sketching_dim: 32,64,128,256,512
+      cls_pretrain_size: full-1
+      use_target: True
+    cmds:
+      - |
+        task cifar10:clip:cov_ntk:selection2 fraction={{.fraction}} max_epochs={{.max_epochs}} sketching_dim={{.sketching_dim}} simplex_method={{.simplex_method}} optimizer.lr={{.lr}} sparse_scale={{.sparse_scale}} s_init_method={{.s_init_method}} gamma_init_method={{.gamma_init_method}} c={{.c}} cls_pretrain_size={{.cls_pretrain_size}} seed={{.seed}} server={{.server}} debug={{.debug}} overwrite={{.overwrite}} use_target={{.use_target}}
+  
+  selection2:pretrain-full-2:sweep:
+    vars:
+      seed: 0,1,2,3,4
+      backbone: resnet18
+      fraction: 500,1000,2000,3000,4000
+      max_epochs: 2000
+      simplex_method: sort_pgd
+      s_init_method: random_m
+      gamma_init_method: uniform
+      lr: 1e-2
+      sparse_scale: 1e-3
+      c: 0.6,0.7,0.8,0.9
+      sketching_dim: 32,64,128,256,512
+      cls_pretrain_size: full-2
+      use_target: True
+    cmds:
+      - |
+        task cifar10:clip:cov_ntk:selection2 fraction={{.fraction}} max_epochs={{.max_epochs}} sketching_dim={{.sketching_dim}} simplex_method={{.simplex_method}} optimizer.lr={{.lr}} sparse_scale={{.sparse_scale}} s_init_method={{.s_init_method}} gamma_init_method={{.gamma_init_method}} c={{.c}} cls_pretrain_size={{.cls_pretrain_size}} seed={{.seed}} server={{.server}} debug={{.debug}} overwrite={{.overwrite}} use_target={{.use_target}}
+
+
+  ft2:
+    vars:
+      main: finetune.py
+      use_target: True
+      additional: |
+        \
+            finetuning=clip_ft_adam_-2_decay \
+            +selection.c_conditioned=sampled \
+            finetuning.optimizer.weight_decay=0 \
+            finetuning.optimizer.feature_weight_decay=0 \
+            finetuning.optimizer.feature_lr_decay=1 \
+            finetuning.optimizer.lr=1e-1 \
+            finetuning.max_epochs=50
+    cmds:
+      - |
+        python {{.main}} -m \
+          dataset=cifar10 \
+          backbone={{.backbone}} \
+          selection=cov_ntk \
+            selection.fraction={{.fraction}} \
+            selection.max_epochs={{.max_epochs}} \
+            selection.eigen_cutoff=-1 \
+            selection.sketching_dim={{.sketching_dim}} \
+            selection.simplex_method={{.simplex_method}} \
+            selection.optimizer.lr={{.lr}} \
+            selection.sparse_scale={{.sparse_scale}} \
+            selection.s_init_method={{.s_init_method}} \
+            selection.gamma_init_method={{.gamma_init_method}} \
+            selection.c={{.c}} \
+            selection.use_target={{.use_target}} \
+          overwrite={{.overwrite}} \
+          debug={{.debug}} \
+          seed={{.seed}} \
+          hydra/launcher={{.server}} {{.additional}}
+  
+  ft2:missing:
+      # seed: 0,1,2,3,4
+      # backbone: resnet18
+      # dataset: cifar10
+      # fraction: 500,1000,1500,2000,2500,3000,3500,4000
+      # max_epochs: 2000
+      # simplex_method: sort_pgd
+      # s_init_method: random_m
+      # gamma_init_method: uniform
+      # lr: 1e-2
+      # sparse_scale: 1e-3
+      # c: 0.8,0.9
+      # sketching_dim: 128,256,512
+      # use_target: random
+    deps:
+      - selection2:missing
+    vars:
+      seed: 0,1,2,3,4
+      backbone: resnet18
+      fraction: 500,1000,1500,2000,2500,3000,3500,4000
+      max_epochs: 2000
+      simplex_method: sort_pgd
+      s_init_method: random_m
+      gamma_init_method: uniform
+      lr: 1e-2
+      sparse_scale: 1e-3
+      c: 0.8,0.9
+      sketching_dim: 256,512
+      max_epochs: 50
+      main: finetune.py
+      additional: |
+        \
+            finetuning=clip_ft_adam_-2_decay \
+            +selection.c_conditioned=sampled \
+            finetuning.optimizer.weight_decay=0 \
+            finetuning.optimizer.feature_weight_decay=0 \
+            finetuning.optimizer.feature_lr_decay=1 \
+            finetuning.optimizer.lr=1e-2 \
+            finetuning.max_epochs=50
+    cmds:
+      - |
+        python {{.main}} -m \
+          dataset=cifar10 \
+          backbone={{.backbone}} \
+          selection=cov_ntk \
+            selection.fraction={{.fraction}} \
+            selection.max_epochs={{.max_epochs}} \
+            selection.eigen_cutoff=-1 \
+            selection.sketching_dim={{.sketching_dim}} \
+            selection.simplex_method={{.simplex_method}} \
+            selection.optimizer.lr={{.lr}} \
+            selection.sparse_scale={{.sparse_scale}} \
+            selection.s_init_method={{.s_init_method}} \
+            selection.gamma_init_method={{.gamma_init_method}} \
+            selection.c={{.c}} \
+            selection.use_target={{.use_target}} \
+          overwrite={{.overwrite}} \
+          debug={{.debug}} \
+          seed={{.seed}} \
+          hydra/launcher={{.server}} {{.additional}}
+  
+  ft2:debug:
+    vars:
+      seed: 0
+      backbone: resnet18
+      fraction: 500
+      max_epochs: 2000
+      simplex_method: sort_pgd
+      s_init_method: random_m
+      gamma_init_method: uniform
+      lr: 1e-2
+      sparse_scale: 1e-3
+      c: 0.9
+      sketching_dim: 256
+      server: basic
+      use_target: random
+      additional: |
+        \
+        finetuning=clip_ft_adam_-2_decay \
+        +selection.c_conditioned=sampled \
+        finetuning.optimizer.weight_decay=0 \
+        finetuning.optimizer.feature_weight_decay=0 \
+        finetuning.optimizer.feature_lr_decay=1 \
+        finetuning.optimizer.lr=1e-2 \
+        finetuning.max_epochs=50
+  cmds:
+    - |
+      python {{.main}} -m \
+        dataset=cifar10 \
+        backbone={{.backbone}} \
+        selection=cov_ntk \
+          selection.fraction={{.fraction}} \
+          selection.max_epochs={{.max_epochs}} \
+          selection.eigen_cutoff=-1 \
+          selection.sketching_dim={{.sketching_dim}} \
+          selection.simplex_method={{.simplex_method}} \
+          selection.optimizer.lr={{.lr}} \
+          selection.sparse_scale={{.sparse_scale}} \
+          selection.s_init_method={{.s_init_method}} \
+          selection.gamma_init_method={{.gamma_init_method}} \
+          selection.c={{.c}} \
+          selection.use_target={{.use_target}} \
+        overwrite={{.overwrite}} \
+        debug={{.debug}} \
+        seed={{.seed}} \
+        hydra/launcher={{.server}} {{.additional}}
+
+  ft2:pretrain-full-1:debug:
+    vars:
+      seed: 0
+      backbone: resnet18
+      fraction: 500
+      max_epochs: 2000
+      simplex_method: sort_pgd
+      s_init_method: random_m
+      gamma_init_method: uniform
+      lr: 1e-2
+      sparse_scale: 1e-3
+      c: 0.9
+      sketching_dim: 512
+      cls_pretrain_size: full-1
+    cmds:
+      - |
+        task cifar10:clip:cov_ntk:ft2 fraction={{.fraction}} max_epochs={{.max_epochs}} sketching_dim={{.sketching_dim}} simplex_method={{.simplex_method}} optimizer.lr={{.lr}} sparse_scale={{.sparse_scale}} s_init_method={{.s_init_method}} gamma_init_method={{.gamma_init_method}} c={{.c}} seed={{.seed}} server={{.server}} debug={{.debug}} overwrite={{.overwrite}} cls_pretrain_size={{.cls_pretrain_size}}
+    
+
+  ft2:pretrain-full-1:sweep:
+    vars:
+      seed: 0,1,2,3,4
+      backbone: resnet18
+      fraction: 500,1000,2000,3000,4000
+      max_epochs: 2000
+      simplex_method: sort_pgd
+      s_init_method: random_m
+      gamma_init_method: uniform
+      lr: 1e-2
+      sparse_scale: 1e-3
+      c: 0.6,0.7,0.8,0.9
+      sketching_dim: 32,64,128,256,512
+      cls_pretrain_size: full-1
+      use_target: True
+    cmds:
+      - |
+        task cifar10:clip:cov_ntk:ft2 fraction={{.fraction}} max_epochs={{.max_epochs}} sketching_dim={{.sketching_dim}} simplex_method={{.simplex_method}} optimizer.lr={{.lr}} sparse_scale={{.sparse_scale}} s_init_method={{.s_init_method}} gamma_init_method={{.gamma_init_method}} c={{.c}} seed={{.seed}} server={{.server}} debug={{.debug}} overwrite={{.overwrite}} cls_pretrain_size={{.cls_pretrain_size}} use_target={{.use_target}}
+
+  ft2:pretrain-full-2:debug:
+    vars:
+      seed: 0
+      backbone: resnet18
+      fraction: 500
+      max_epochs: 2000
+      simplex_method: sort_pgd
+      s_init_method: random_m
+      gamma_init_method: uniform
+      lr: 1e-2
+      sparse_scale: 1e-3
+      c: 0.9
+      sketching_dim: 512
+      cls_pretrain_size: full-2
+    cmds:
+      - |
+        task cifar10:clip:cov_ntk:ft2 fraction={{.fraction}} max_epochs={{.max_epochs}} sketching_dim={{.sketching_dim}} simplex_method={{.simplex_method}} optimizer.lr={{.lr}} sparse_scale={{.sparse_scale}} s_init_method={{.s_init_method}} gamma_init_method={{.gamma_init_method}} c={{.c}} seed={{.seed}} server={{.server}} debug={{.debug}} overwrite={{.overwrite}} cls_pretrain_size={{.cls_pretrain_size}}
+
+  ft2:pretrain-full-2:sweep:
+    vars:
+      seed: 0,1,2,3,4
+      backbone: resnet18
+      fraction: 500,1000,2000,3000,4000
+      max_epochs: 2000
+      simplex_method: sort_pgd
+      s_init_method: random_m
+      gamma_init_method: uniform
+      lr: 1e-2
+      sparse_scale: 1e-3
+      c: 0.6,0.7,0.8,0.9
+      sketching_dim: 32,64,128,256,512
+      cls_pretrain_size: full-2
+    cmds:
+      - |
+        task cifar10:clip:cov_ntk:ft2 fraction={{.fraction}} max_epochs={{.max_epochs}} sketching_dim={{.sketching_dim}} simplex_method={{.simplex_method}} optimizer.lr={{.lr}} sparse_scale={{.sparse_scale}} s_init_method={{.s_init_method}} gamma_init_method={{.gamma_init_method}} c={{.c}} seed={{.seed}} server={{.server}} debug={{.debug}} overwrite={{.overwrite}} cls_pretrain_size={{.cls_pretrain_size}}
+
+
+  cov2-mixselection:ft:
+    summary: "We do not need to do the selection again, just finetune the model stage should change"
+    vars:
+      main: finetune.py
+      additional: |
+        \
+        finetuning=
+        +selection.c_conditioned=False \
+        finetuning.optimizer.weight_decay=0 \
+        finetuning.optimizer.feature_lr_decay=1 \
+        finetuning.optimizer.lr=1e-2 \
+        finetuning.max_epochs=50
+      mixselection_ratio: 0.9
+      mixselection_method: deepcore_Uncertainty-Entropy_4000
+      mixselection_mixmethod: concat
+      selection: cov
+      backbone: resnet18
+      fraction: 1000
+      max_epochs: 2000
+      simplex_method: sort_pgd
+      s_init_method: random_m
+      gamma_init_method: uniform
+      lr: 1e-1
+      sparse_scale: 1e-3
+      c: 0.9
+      sketching_dim: 512
+      seed: 0
+    cmds:
+      - |
+        python {{.main}} -m \
+          dataset={{.dataset}} \
+          backbone={{.backbone}} \
+          selection={{.selection}} \
+            selection.fraction={{.fraction}} \
+            selection.max_epochs={{.max_epochs}} \
+            selection.eigen_cutoff=-1 \
+            selection.sketching_dim={{.sketching_dim}} \
+            selection.simplex_method={{.simplex_method}} \
+            selection.optimizer.lr={{.lr}} \
+            selection.sparse_scale={{.sparse_scale}} \
+            selection.s_init_method={{.s_init_method}} \
+            selection.gamma_init_method={{.gamma_init_method}} \
+            selection.c={{.c}} \
+            +selection.mixselection_ratio={{.mixselection_ratio}} \
+            +selection.mixselection_method={{.mixselection_method}} \
+            +selection.mixselection_mixmethod={{.mixselection_mixmethod}} \
+          overwrite={{.overwrite}} \
+          debug={{.debug}} \
+          seed={{.seed}} \
+          hydra/launcher={{.server}} {{.additional}}

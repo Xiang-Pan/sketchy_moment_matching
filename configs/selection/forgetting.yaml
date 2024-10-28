@@ -1,0 +1,17 @@
+defaults:
+  - dataset: cifar10
+  - training: deepcore
+  - backbone: resnet50
+
+method: Forgetting
+balance: true
+uncertainty: entropy
+seed: 0
+fraction: 0.5
+submodular: null
+submodular_greedy: null 
+specific_model: null
+workers: 7
+print_freq: 100
+
+str: ${.method}-${.balance}-${.uncertainty}-${.fraction}-${.seed}

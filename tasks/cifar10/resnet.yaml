@@ -1,0 +1,140 @@
+# https://taskfile.dev
+
+version: '3'
+
+vars:
+  GREETING: Hello, World!
+  backbone: '{{.backbone | default "resnet50"}}'
+  DATASET: cifar10
+
+tasks:
+  default:
+    cmds:
+      - echo "{{.GREETING}}"
+    silent: true
+  ls:
+    cmds:
+      - |
+        python opt.py -m \
+        dataset=cifar10 \
+        backbone=resnet18 \
+        selection=leverage_score \
+        selection.space=feature \
+        selection.fraction=0.001 \
+        selection.source=pretrained \
+        selection.B=10 \
+        selection.k=512 \
+        selection.use_raw_G=False \
+        selection.use_residual=False \
+        overwrite=True \
+        hydra/launcher=basic
+    silent: true
+  ls-cifar10-0.001:
+    cmds:
+      - |
+        python opt.py -m \
+        dataset=cifar10 \
+        backbone=resnet18 \
+        selection=leverage_score \
+        selection.space=feature \
+        selection.fraction=0.001 \
+        selection.source=pretrained \
+        selection.B=10 \
+        selection.k=512 \
+        selection.use_raw_G=False \
+        selection.use_residual=False \
+        overwrite=True \
+        hydra/launcher=basic
+    silent: false
+  leverage_score-cifar10_binary-0.001:
+    cmds:
+      - |
+        python opt.py -m \
+        dataset=cifar10 \
+        backbone=resnet18 \
+        selection=leverage_score \
+        selection.space=binary \
+        selection.fraction=0.001 \
+        selection.source=pretrained \
+        selection.B=10 \
+        selection.k=512 \
+        selection.use_raw_G=False \
+        selection.use_residual=False \
+        overwrite=True \
+        hydra/launcher=basic
+  cov:
+    cmds:
+      - |
+        python opt.py -m \
+          dataset=cifar10 \
+          backbone={{.BACKBONE}} \
+          selection=cov \
+          selection.fraction=1000,2000,3000,4000 \
+          selection.max_epochs=50000 \
+          selection.sparse_scale=1e-1,1e-2,1e-3,1e-4 \
+          selection.s_lr=1e-2 \
+          selection.c=1,1.05 \
+          overwrite=True \
+          hydra/launcher={{.server}}
+  random:
+    cmds:
+      - |
+        python opt.py -m \
+          dataset=cifar10 \
+          backbone={{.backbone}} \
+          selection=random \
+          selection.fraction=1000,2000,3000,4000 \
+          overwrite=True \
+          hydra/launcher={{.server}}
+  ls-preselection-debug:
+    cmds:
+      - |
+        python opt.py -m \
+        dataset=cifar10 \
+        backbone=resnet18 \
+        selection=leverage_score \
+        selection.space=feature \
+        selection.fraction=0.001,0.01,0.1 \
+        selection.source=pretrained \
+        selection.B=10 \
+        selection.k=512 \
+        selection.use_raw_G=False \
+        selection/preselection=submodular \
+        selection.use_residual=True \
+        hydra/launcher=basic
+  submodular-facility_location:
+    cmds:
+      - |
+        python opt.py -m \
+        selection=submodular \
+        selection.submodular_method=facility_location \
+        selection.fraction=0.001 \
+        hydra/launcher=basic
+  submodular-max_coverage:
+    cmds:
+      - |
+        python opt.py -m \
+        dataset=cifar10 \
+        backbone=clip-vit-base-patch32 \
+        selection=submodular \
+        selection.submodular_method=max_coverage \
+        selection.fraction=0.001,0.01,0.1 \
+        hydra/launcher=basic
+  cov_greedy:
+    cmds:
+      - |
+        python opt.py -m \
+        dataset=cifar10 \
+        selection=cov_greedy \
+        selection.fraction=0.001,0.01,0.1 \
+        debug=True \
+        hydra/launcher=basic
+  cov_ga:
+    cmds:
+      - |
+        python opt.py -m \
+        dataset={{.DATASET}} \
+        selection=cov_ga \
+        selection.fraction=0.001,0.01,0.1 \
+        debug=True \
+        hydra/launcher=basic

@@ -1,0 +1,17 @@
+# There are two versions. SkMMv2 and SkMMv2_stable are mathematically equivalent, but SkMMv2 should be slightly faster when the sketching dim m is large. There are 3 hyper-parameters in this algorithm:
+# sketching dimension m should be slightly larger than but proportional to the intrinsic dimension
+# block size b is there mainly for the efficiency sake. When n is small, I usually set b to 1. If the algorithm is too slow, you can increase the block size (I’ve done 5 or 10).
+# temperature: leave it as default unless you see some weird behaviors.
+
+method: SkMMv2
+data_type: eb
+fraction: 0.001
+sketching_dim: 512
+block_size: 5
+temperature: 0.1
+sampler: exp
+seed: 0
+
+layers: -2
+use_target: random
+cls_pretrain_size: null

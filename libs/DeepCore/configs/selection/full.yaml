@@ -1,0 +1,4 @@
+method: full
+data_type: eb
+fraction: 1.0
+root_dir: method=${.method}-data_type=${.data_type}

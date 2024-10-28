@@ -1,0 +1,10 @@
+defaults:
+  - optimizer: sgd
+  - scheduler: step_lr_gd
+feature_norm: true
+train_batch_size: 50000
+val_batch_size: 50000
+test_batch_size: 50000
+max_epochs: 200
+seed: 0
+str: train_batch_size=${.train_batch_size}-${.optimizer.str}-scheduler=${.scheduler.str}

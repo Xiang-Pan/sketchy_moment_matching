@@ -1,0 +1,44 @@
+# https://taskfile.dev
+
+version: '3'
+
+vars:
+  dataset: '{{.dataset | default "cifar10"}}'
+  backbone: '{{.backbone | default "resnet50"}}'
+  seed: '{{.seed | default 0}}'
+  debug: '{{.debug | default false}}'
+  main: '{{.main | default "selection.py"}}'
+  overwrite: '{{.overwrite | default false}}'
+
+tasks:
+  cov:
+    desc: task {{.dataset}}:{{.method}} main=finetune.py server=basic
+    cmds:
+      - |
+        python {{.main}} -m \
+          dataset=cifar10 \
+          backbone={{.backbone}} \
+          selection=cov \
+          selection.fraction=1000,2000,3000,4000 \
+          selection.max_epochs=30000 \
+          selection.sparse_scale=1e-2 \
+          selection.s_lr=1e-2 \
+          selection.c=1.05 \
+          seed=0,1,2,3,4 \
+          hydra/launcher={{.server}}
+  cov_debug:
+    desc: task cov_debug dataset=cifar10 backbone=
+    cmds:
+      - |
+        python {{.main}} -m \
+          dataset={{.dataset}} \
+          backbone={{.backbone}} \
+          finetuning=deepcore_50 \
+          selection=cov \
+          selection.fraction=1000 \
+          selection.max_epochs=30000 \
+          selection.sparse_scale=1e-2 \
+          selection.s_lr=1e-2 \
+          selection.c=1.05 \
+          seed=0 \
+          hydra/launcher=basic

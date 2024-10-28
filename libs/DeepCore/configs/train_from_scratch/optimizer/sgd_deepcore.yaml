@@ -1,0 +1,8 @@
+type: SGD
+lr: 0.1
+momentum: 0.9
+wd: 5e-4
+nesterov: true
+
+
+str: type=${.type}-lr=${.lr}-wd=${.wd}-momentum=${.momentum}-nesterov=${.nesterov}

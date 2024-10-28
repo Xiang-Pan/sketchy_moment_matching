@@ -1,0 +1,100 @@
+# https://taskfile.dev
+
+version: '3'
+
+vars:
+  GREETING: Hello, World!
+  backbone: '{{.backbone | default "clip-vit-base-patch32"}}'
+
+tasks:
+  default:
+    cmds:
+      - echo "{{.GREETING}}"
+    silent: true
+  feature:
+    cmds:
+      - python main.py mode=feature_extraction backbone={{.backbone}}
+  ls:
+    cmds:
+      - |
+        python opt.py -m \
+        dataset=cifar10 \
+        backbone=clip-vit-base-patch32 \
+        selection=leverage_score \
+        selection.space=feature \
+        selection.fraction=0.001,0.01,0.1,0.2,0.4,0.6,0.8 \
+        selection.source=pretrained \
+        selection.B=10 \
+        selection.k=512 \
+        selection.use_raw_G=False \
+        selection.use_residual=False \
+        overwrite=True \
+        hydra/launcher=basic
+    silent: true
+  ls-cifar10-0.001:
+    cmds:
+      - |
+        python opt.py -m \
+        dataset=cifar10 \
+        backbone=clip-vit-base-patch32 \
+        selection=leverage_score \
+        selection.space=feature \
+        selection.fraction=0.001 \
+        selection.source=pretrained \
+        selection.B=10 \
+        selection.k=512 \
+        selection.use_raw_G=False \
+        selection.use_residual=False \
+        overwrite=True \
+        hydra/launcher=basic
+    silent: false
+  leverage_score-cifar10_binary-0.001:
+    cmds:
+      - |
+        python opt.py -m \
+        dataset=cifar10 \
+        backbone=clip-vit-base-patch32 \
+        selection=leverage_score \
+        selection.space=binary \
+        selection.fraction=0.001 \
+        selection.source=pretrained \
+        selection.B=10 \
+        selection.k=512 \
+        selection.use_raw_G=False \
+        selection.use_residual=False \
+        overwrite=True \
+        hydra/launcher=basic
+  cov:
+    cmds:
+      - |
+        python opt.py -m \
+          dataset=cifar10 \
+          backbone={{.backbone}} \
+          selection=cov \
+          selection.fraction=1000,2000,3000,4000 \
+          selection.max_epochs=50000 \
+          selection.sparse_scale=1e-1,1e-2,1e-3,1e-4 \
+          selection.s_lr=1e-2 \
+          selection.c=1,1.05 \
+          overwrite=True \
+          hydra/launcher={{.server}}
+  random:
+    cmds:
+      - |
+        python opt.py -m \
+          dataset=cifar10 \
+          backbone={{.backbone}} \
+          selection=random \
+          selection.fraction=1000,2000,3000,4000 \
+          overwrite=True \
+          hydra/launcher=basic
+  forgetting:
+    cmds:
+      - |
+        python opt.py -m \
+          dataset=cifar10 \
+          backbone={{.backbone}} \
+          selection=forgetting \
+          selection.fraction=1000 \
+          overwrite=True \
+          hydra/launcher=basic

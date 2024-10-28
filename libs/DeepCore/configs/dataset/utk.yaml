@@ -1,0 +1,9 @@
+name: utk
+dataset: utk
+val_ratio: 0.1
+test_ratio: 0.1
+y_normalize: true
+corped: true
+seed: 0
+
+str: name=${.name}-val_ratio=${.val_ratio}-test_ratio=${.test_ratio}_seed=${.seed}

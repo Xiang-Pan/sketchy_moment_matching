@@ -1,0 +1,9 @@
+method: cov_pgd
+data_type: eb
+c: 2
+cov_ratio: 1
+l1_ratio: 10
+y_loss_ratio: 1
+seed: 0
+str: method=${.method}-data_type=${.data_type}-c=${.c}-cov_ratio=${.cov_ratio}-l1_ratio=${.l1_ratio}-y_loss_ratio=${.y_loss_ratio}-seed=${.seed}
+root_dir: ${.str}

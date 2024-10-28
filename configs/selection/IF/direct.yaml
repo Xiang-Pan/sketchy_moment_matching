@@ -1,0 +1,2 @@
+method: direct
+str: method=${.method}

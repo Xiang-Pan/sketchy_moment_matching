@@ -1,0 +1,5 @@
+name: tinynet_e
+version: tinynet_e.in1k
+classifier: linear
+
+str: name=${.name}-version=${.version}-classifier=${.classifier}

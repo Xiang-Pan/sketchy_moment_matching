@@ -1,0 +1,14 @@
+{
+  "exclude": [
+    "**/logs",
+    "**/outputs",
+    "libs/",
+    "**/__pycache__",
+    "**/*.log",
+    "**/cache*/",
+    "**/data*/",
+    "**/tmp*/",
+    "**/wandb",
+    "**/back/*"
+  ]
+}

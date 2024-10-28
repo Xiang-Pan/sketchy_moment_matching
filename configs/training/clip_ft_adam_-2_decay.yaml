@@ -1,0 +1,8 @@
+defaults:
+  - optimizer: clip_ft_adam_weight_decay
+  - scheduler: null
+batch_size: 512
+max_epochs: 50
+layers: -2
+
+seed: 0

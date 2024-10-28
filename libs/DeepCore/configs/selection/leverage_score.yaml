@@ -1,0 +1,21 @@
+defaults:
+  - preselection: submodular
+method: leverage_score
+data_type: eb
+source: finetuned # pretrained, linear_trained, finetuned
+space: feature
+seed: 0
+fraction: 0.001
+use_residual: False # False, add, multiply
+use_random: False
+residual_source: linear_trained
+use_raw_G: True
+B: 20
+soft_orth: 0 # soft_orth=0 means no soft
+k: 10 # sketching
+classifier_only: true # NTK
+
+
+# Training
+max_epochs: 1 # iterative training
+# str: method=${.method}-data_type=${.data_type}-seed=${.seed}-fraction=${.fraction}-k=${.k}-classifier_only=${.classifier_only}-use_residual=${.use_residual}-source=${.source}-space=${.space}-B=${.B}-soft_orth=${.soft_orth}

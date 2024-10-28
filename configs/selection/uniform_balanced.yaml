@@ -1,0 +1,12 @@
+defaults:
+  - dataset: cifar10
+  - training: deepcore
+  - backbone: resnet50
+
+method: uniform
+balance: true
+fraction: 0.5
+seed: 0
+data_type: eb
+
+str: ${.method}-${.data_type}-${.balance}-${.fraction}-${.seed} 

@@ -1,0 +1,3 @@
+method: cov_greedy
+data_type: eb
+fraction: 0.001

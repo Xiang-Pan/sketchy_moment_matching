@@ -1,0 +1,36 @@
+gamma:
+  optimizer:
+    name: Adam
+    params:
+      lr: 1e-2
+  scheduler:
+    name: ConstantLR
+    params:
+      factor: 1.0
+s:
+  optimizer:
+    name: Adam
+    params:
+      lr: 1e-2
+  scheduler:
+    name: ConstantLR
+    params:
+      factor: 1.0
+
+method: cov_ntk
+data_type: eb
+fraction: 0.001
+seed: 0
+c: 2
+k: 512
+max_epochs: 100
+sparse_scale: 10
+optimization: sgd
+s_lr: 1e-2
+gamma_lr: 1e-2
+layers: -2
+use_target: True
+s_init_method: uniform
+
+eigen_cutoff: -1  #!deprecated
+s_eps: -1         #!deprecated
