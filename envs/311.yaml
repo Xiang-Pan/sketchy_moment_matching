@@ -327,5 +327,5 @@ dependencies:
     - yacs==0.1.8
     - yarl==1.9.4
     - zipp==3.17.0
-prefix: /vast/xp2030/conda/envs/311
+prefix: CONDAPATH
 
