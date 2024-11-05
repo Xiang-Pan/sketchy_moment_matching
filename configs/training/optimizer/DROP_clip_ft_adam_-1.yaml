@@ -1,8 +1,0 @@
-__target__: torch.optim.Adam
-type: Adam
-lr: 1e-1
-weight_decay: 0
-feature_lr_decay: 1
-
-
-str: type=${.type}-lr=${.lr}-weight_decay=${.weight_decay}-feature_lr_decay=${.feature_lr_decay}

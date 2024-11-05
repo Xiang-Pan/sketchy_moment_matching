@@ -1,8 +1,0 @@
-method: modified_leverage_score
-data_type: eb
-seed: 0
-fraction: 0.001
-use_residual: False
-
-str: ${.method}-${.data_type}-${.seed}-${.fraction}-${.use_residual}
-str_without_fraction: ${.method}-${.data_type}-${.seed}-${.use_residual}

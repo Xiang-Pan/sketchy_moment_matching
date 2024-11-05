@@ -1,8 +1,0 @@
-name: resnet50
-skip_pool: false
-version: swav_run0
-classifier: linear
-pretrain_path: LABROOT/RRL/checkpoints/supervised_pretrain/resnet50/checkpoint_run0.pth.tar
-img_dim: 224
-
-str: name=${.name}-version=${.version}-classifier=${.classifier}

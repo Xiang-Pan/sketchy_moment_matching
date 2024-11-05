@@ -1,9 +1,0 @@
-type: SGD
-nesterov: true
-momentum: 0.9
-lr: 0.01
-wd: 5e-4
-wd_skip_bn: true
-lr_last_layer: -1
-
-str: type=${.type}-lr=${.lr}-wd=${.wd}-lr_last_layer=${.lr_last_layer}

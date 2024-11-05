@@ -1,5 +1,0 @@
-defaults:
-  - region: null
-method: submodular
-metric: euclidean
-fraction: 5x

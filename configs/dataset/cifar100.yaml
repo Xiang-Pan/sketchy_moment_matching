@@ -1,5 +1,0 @@
-name: cifar100
-val_ratio: 0.00
-num_classes: 100
-seed: 0
-str: name=${.name}-val_ratio=${.val_ratio}-seed=${.seed}

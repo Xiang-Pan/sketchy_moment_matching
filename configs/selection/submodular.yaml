@@ -1,6 +1,0 @@
-defaults:
-  - preselection: null
-method: submodular
-data_type: eb
-fraction: 0.001
-submodular_method: facility_location

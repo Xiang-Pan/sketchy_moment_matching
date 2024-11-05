@@ -1,9 +1,0 @@
-_target_: torchvision.datasets.CelebA
-name: CelebA
-target_type: attr
-attr_names:
-- Blond_Hair
-- Male
-num_classes: 4
-
-str: ${.name}-${.target_type}-Blond_Hair__Male

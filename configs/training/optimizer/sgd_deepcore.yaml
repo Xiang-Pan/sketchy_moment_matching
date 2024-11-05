@@ -1,8 +1,0 @@
-type: SGD
-lr: 0.1
-momentum: 0.9
-nesterov: true
-weight_decay: 5e-4
-
-
-str: type=${.type}-lr=${.lr}-momentum=${.momentum}-nesterov=${.nesterov}-weight_decay=${.weight_decay}

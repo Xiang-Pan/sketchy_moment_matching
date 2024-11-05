@@ -1,9 +1,0 @@
-#  256, a learning rate of 0.01 reduced by a factor of 10 three times (equally spaced intervals), weight decay of 0.0001 and momentum of 0.9
-type: SGD
-lr: 1e-2
-momentum: 0.9
-nesterov: false # default is false
-weight_decay: 0.0001 # default is 0
-
-
-str: type=${.type}-lr=${.lr}-momentum=${.momentum}-nesterov=${.nesterov}-weight_decay=${.weight_decay}

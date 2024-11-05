@@ -1,3 +1,0 @@
-type: Adam
-lr: 0.1
-weight_decay: 5e-4

@@ -1,4 +1,0 @@
-defaults:
-  - region: knn
-method: random
-fraction: 2x

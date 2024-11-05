@@ -1,5 +1,0 @@
-name: resnet18
-version: IMAGENET1K_V1
-classifier: mlp_50
-
-str: name=${.name}-version=${.version}-classifier=${.classifier}

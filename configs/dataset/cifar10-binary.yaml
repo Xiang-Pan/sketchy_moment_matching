@@ -1,7 +1,0 @@
-name: cifar10-binary
-dataset: cifar10
-val_ratio: 0.01
-num_classes: 2
-seed: 0
-
-str: name=${.name}-val_ratio=${.val_ratio}-seed=${.seed}

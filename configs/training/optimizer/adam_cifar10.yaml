@@ -1,6 +1,0 @@
-type: Adam
-lr: 1e-3
-weight_decay: 5e-4
-
-
-str: type=${.type}-lr=${.lr}-weight_decay=${.weight_decay}

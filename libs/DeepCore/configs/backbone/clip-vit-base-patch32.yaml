@@ -1,5 +1,0 @@
-name: clip-vit-base-patch32
-version: openai/clip-vit-base-patch32
-classifier: linear
-
-str: name=${.name}-version=${.version}-classifier=${.classifier}

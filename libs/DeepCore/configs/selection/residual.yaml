@@ -1,7 +1,0 @@
-method: residual
-data_type: eb
-seed: 0
-fraction: 0.001
-
-str: ${.method}-${.data_type}-${.seed}-${.fraction}
-str_without_fraction: ${.method}-${.data_type}-${.seed}
