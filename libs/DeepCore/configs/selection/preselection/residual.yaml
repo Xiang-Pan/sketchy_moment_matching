@@ -1,0 +1,4 @@
+defaults:
+  - region: null
+method: residual
+fraction: 5x

@@ -1,0 +1,8 @@
+defaults:
+  - optimizer: adam_-2
+  - scheduler: null
+batch_size: 512
+max_epochs: 200
+layers: -2
+
+seed: 0

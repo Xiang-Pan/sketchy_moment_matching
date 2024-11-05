@@ -1,0 +1,5 @@
+name: resnet50
+version: IMAGENET1K_V2
+classifier: linear
+
+str: name=${.name}-version=${.version}-classifier=${.classifier}

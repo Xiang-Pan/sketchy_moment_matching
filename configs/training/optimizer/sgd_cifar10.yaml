@@ -1,0 +1,8 @@
+type: SGD
+lr: 1e-3
+momentum: 0.9
+nesterov: false # default is false
+weight_decay: 0 # default is 0
+
+
+str: type=${.type}-lr=${.lr}-momentum=${.momentum}-nesterov=${.nesterov}-weight_decay=${.weight_decay}

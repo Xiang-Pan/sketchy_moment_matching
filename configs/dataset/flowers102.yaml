@@ -1,0 +1,7 @@
+_target_: torchvision.datasets.CelebA
+name: CelebA
+target_type: attr
+attr_name: Blond_Hair
+num_classes: 2
+
+str: ${.name}-${.target_type}-${.attr_name}

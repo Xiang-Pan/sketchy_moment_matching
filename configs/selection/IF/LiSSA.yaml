@@ -1,0 +1,6 @@
+method: LiSSA
+damp: 0.01
+repeat: 1
+depth: 500
+scale: 25
+str: method=${.method}-damp=${.damp}-repeat=${.repeat}-depth=${.depth}-scale=${.scale}

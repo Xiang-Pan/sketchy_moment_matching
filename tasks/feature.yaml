@@ -1,0 +1,19 @@
+# https://taskfile.dev
+
+version: '3'
+
+vars:
+  GREETING: Hello, World!
+  dataset: '{{.dataset | default "cifar10"}}'
+  backbone: '{{.backbone | default "clip-vit-base-patch32"}}'
+
+tasks:
+  default:
+    desc: Cache feature from {{.dataset}} using {{.backbone}}
+    cmds:
+      - |
+        python main.py \
+        mode=feature_extraction \
+        dataset={{.dataset}} \
+        backbone={{.backbone}} \
+        hydra/launcher=basic

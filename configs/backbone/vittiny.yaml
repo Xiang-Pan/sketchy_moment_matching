@@ -1,0 +1,5 @@
+name: vit_tiny_patch16_224
+version: vit_tiny_patch16_224
+classifier: linear
+
+str: name=${.name}-version=${.version}-classifier=${.classifier}

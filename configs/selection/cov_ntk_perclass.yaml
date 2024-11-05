@@ -1,0 +1,25 @@
+optimizer:
+  _target_: torch.optim.Adam
+  lr: 1e-2
+scheduler:
+  _target_: torch.optim.lr_scheduler.ConstantLR
+  factor: 1.0
+
+method: cov_ntk_perclass
+data_type: eb
+fraction: 0.001
+seed: 0
+c: 2
+sparse_scale: 10
+eigen_cutoff: -1
+s_init_method: uniform
+gamma_init_method: uniform
+simplex_method: softmax_pgd
+max_epochs: 30000
+
+k: null
+sketching_dim: null
+
+layers: -2
+use_target: random
+cls_pretrain_size: null

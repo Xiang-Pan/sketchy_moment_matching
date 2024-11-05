@@ -1,0 +1,7 @@
+method: optimization
+loss:
+  - orth_reg
+data_type: eb
+orth_reg_scale: 1
+seed: 0
+c: 2

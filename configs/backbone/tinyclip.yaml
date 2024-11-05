@@ -1,0 +1,5 @@
+name: tinyclip
+version: wkcn/TinyCLIP-ViT-8M-16-Text-3M-YFCC15M
+classifier: linear
+
+str: name=${.name}-version=${.version}-classifier=${.classifier}

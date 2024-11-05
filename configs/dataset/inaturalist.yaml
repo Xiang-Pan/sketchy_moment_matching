@@ -1,0 +1,8 @@
+name: INaturalist
+version: 2021_train
+target_type: super
+category_name: category
+val_ratio: 0.00
+seed: 0
+
+str: name=${.name}-v${.version}-seed${.seed}

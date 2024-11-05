@@ -1,0 +1,6 @@
+type: StepLR
+step_size: 20
+gamma: 0.8
+
+str: step_size=${.step_size}-gamma=${.gamma}
+# The learning rate is initialized to 0.01 and multiplied by 0.1 every 8 epochs

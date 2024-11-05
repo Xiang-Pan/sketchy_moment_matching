@@ -1,0 +1,6 @@
+#  256, a learning rate of 0.01 reduced by a factor of 10 three times (equally spaced intervals), weight decay of 0.0001 and momentum of 0.9
+type: StepLR
+step_size: 30
+gamma: 0.1
+
+str: step_size=${.step_size}-gamma=${.gamma}

@@ -1,0 +1,5 @@
+type: CosineAnnealingLR
+min_lr: 1e-4
+# T_max: 200
+
+str: type=${.type}-min_lr=${.min_lr}

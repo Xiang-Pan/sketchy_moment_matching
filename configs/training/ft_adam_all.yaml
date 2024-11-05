@@ -1,0 +1,9 @@
+# https://wandb.ai/suvadeep/pytorch/reports/Finetuning-of-ResNet-18-on-CIFAR-10-Dataset--VmlldzoxMDE2NjQ1
+defaults:
+  - optimizer: adam_-2
+  - scheduler: null
+batch_size: 128
+max_epochs: 200
+layers: all
+
+seed: 0
