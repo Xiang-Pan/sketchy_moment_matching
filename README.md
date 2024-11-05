@@ -1,4 +1,5 @@
-# Sketchy Momentum Matching (SkMM)
+# Sketchy Moment Matching (SkMM)
+Official implementation of [Sketchy Moment Matching](https://arxiv.org/abs/2407.06120).
 <!-- figure -->
 <p align="center">
   <img src="./figures/skmm.png" width="500">
